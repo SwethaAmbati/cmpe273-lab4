@@ -25,6 +25,7 @@ public class DistributedCacheService implements CacheServiceInterface {
 
 	@Override
 	public String get(long key) {
+		String value;
 		Future<HttpResponse<JsonNode>> future = Unirest
 				.get(this.cacheServerUrl + "/cache/{key}")
 				.header("accept", "application/json")
@@ -39,13 +40,17 @@ public class DistributedCacheService implements CacheServiceInterface {
 
 					@Override
 					public void completed(HttpResponse<JsonNode> response) {
-						if (response.getCode() != 200) {
+						if (response == null || response.getCode() != 200) {
+							System.out.println("Failed to get from cache.");
 
 						} else {
+
 							String value = response.getBody().getObject()
 									.getString("value");
-
+							System.out.println("The request is successfull"
+									+ value);
 						}
+
 					}
 
 					@Override
@@ -55,7 +60,14 @@ public class DistributedCacheService implements CacheServiceInterface {
 					}
 
 				});
-		return cacheServerUrl;
+
+		try {
+			return future.get().getBody().getObject().getString("value");
+		} catch (Exception e1) { // TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		return null;
 	}
 
 	@Override

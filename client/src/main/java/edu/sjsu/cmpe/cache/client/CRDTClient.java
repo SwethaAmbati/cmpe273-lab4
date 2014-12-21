@@ -1,6 +1,8 @@
 package edu.sjsu.cmpe.cache.client;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 public class CRDTClient {
@@ -37,17 +39,29 @@ public class CRDTClient {
 
 	public String get(long key) {
 		System.out.println("Getting key value");
+		String correctValue = null;
+		HashMap<String, String> values = new HashMap<String, String>();
 		for (DistributedCacheService inputServer : allServers) {
-
-			inputServer.get(key);
+			values.put(inputServer.getCacheServerURL(), inputServer.get(key));
 		}
 
-		if (successServers.size() < 2) {
+		if (values.size() != 0) {
+			ArrayList<String> values1 = new ArrayList<String>(values.values());
+			;
+			for (String value : values1) {
+				if (Collections.frequency(values1, value) >= 2) {
+					correctValue = value;
+					break;
+				}
+			}
 
+			for (DistributedCacheService inputServer : allServers) {
+				if (!inputServer.get(key).equalsIgnoreCase(correctValue))
+					inputServer.put(key, correctValue);
+			}
 		}
 
-		return null;
+		return correctValue;
 
 	}
-
 }
